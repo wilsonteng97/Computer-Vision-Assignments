@@ -8,7 +8,7 @@ P = rgb2gray(Pc);
 
 %% (b) Display grayscale image
 whos P;
-imshow(P);
+figure('Name', 'Grayscale', 'Color', '#D3D3D3'), imshow(P);
 
 %% (c) Find Min & Max intensities of grayscale image
 min_intensity = min(P(:)) % Used as offset
@@ -16,36 +16,38 @@ max_intensity = max(P(:))
 
 %% d
 
-multiplier = 255 / (double(max_intensity) - double(min_intensity));
-processed_img = (double(P) - double(min_intensity)) * multiplier;
-P2 = uint8(processed_img);
+% norm_factor = 255 / (double(max_intensity) - double(min_intensity));
+% normalised_img = (double(P) - double(min_intensity)) * norm_factor;
+% P2 = uint8(normalised_img);
 
 % Using Image Processing Toolbox Library
-% P2(:,:) = imsubtract(P(:,:), min_intensity);
-% P2(:,:) = immultiply(P2(:,:), 255 / (204 - min_intensity));
+P2(:,:) = imsubtract(P(:,:), double(min_intensity));
+P2(:,:) = immultiply(P2(:,:), 255 / (double(max_intensity) - double(min_intensity)));
 
-assert(min(P2(:)) == 0 && max(P2(:)) == 255)    % Check if P2 has gone through contrast stretching
-
+assert(min(P2(:)) == 0 && max(P2(:)) == 255) % Check if P2 has gone through contrast stretching
+disp("Assertion passed : P2 max and min values are 0 and 255 respectively.");
 %% e
-imshow(P2);
-imshow(P, []);
+figure('Name', 'Normalised', 'Color', '#D3D3D3'), imshow(P2);
+figure('Name', 'Original (imshow(P))', 'Color', '#D3D3D3'), imshow(P);
 
+% imshow(img, []) displays a contrast stretched image without changing the input matrix. 
+figure('Name', 'Original (imshow(P, []))', 'Color', '#D3D3D3'), imshow(P, []);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2.2 Histogram Equalization
 
-%% a
-Pc = imread('image/mrt-train.jpg');
+%% (a) Show histogram of P
+Pc = imread('images/mrt-train.jpg');
 P = rgb2gray(Pc);
-imhist(P, 10);
-imhist(P, 256);
+figure('Name', 'Histogram (10 bins)', 'Color', '#D3D3D3'), imhist(P, 10);
+figure('Name', 'Histogram (256 bins)', 'Color', '#D3D3D3'), imhist(P, 256);
 
-%% b
+%% (b) Histogram Equalization on P
 P3 = histeq(P, 255);
 imhist(P3, 10);
 imhist(P3, 256);
 
-%% c
+%% (c) 
 P3 = histeq(P3, 255);
 imhist(P3, 10);
 imhist(P3, 256);

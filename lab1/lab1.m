@@ -8,7 +8,9 @@ P = rgb2gray(Pc);
 
 %% (b) Display grayscale image
 whos P;
-figure('Name', 'Grayscale', 'Color', '#D3D3D3'), imshow(P);
+figure('Name', 'Grayscale', 'Color', '#D3D3D3');
+subplot(1,2,1), imshow(Pc), title('RGB'); % Every pixel has the same value for all 3 channels
+subplot(1,2,2), imshow(P), title('Grayscale');
 
 %% (c) Find Min & Max intensities of grayscale image
 min_intensity = min(P(:)) % Used as offset
@@ -26,30 +28,50 @@ P2(:,:) = immultiply(P2(:,:), 255 / (double(max_intensity) - double(min_intensit
 
 assert(min(P2(:)) == 0 && max(P2(:)) == 255) % Check if P2 has gone through contrast stretching
 disp("Assertion passed : P2 max and min values are 0 and 255 respectively.");
-%% e
-figure('Name', 'Normalised', 'Color', '#D3D3D3'), imshow(P2, []);
-figure('Name', 'Original', 'Color', '#D3D3D3'), imshow(P, []);
 
+%% e
+
+figure('Name', 'Comparison between original and contrast stretched image', 'Color', '#D3D3D3');
+subplot(1,2,1), imshow(P), title('Original');
+subplot(1,2,2), imshow(P2), title('Contrast Stretched (Normalised)');
+
+% imshow(img, []) displays a contrast stretched image without changing the input matrix. 
+figure('Name', 'Original (imshow(P, []))', 'Color', '#D3D3D3'), imshow(P, []), title('With imshow(P, [])');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2.2 Histogram Equalization
 
-%% a
+%% (a) Show histogram of P
 Pc = imread('images/mrt-train.jpg');
 P = rgb2gray(Pc);
-figure('Name', 'Histogram (10 bins)', 'Color', '#D3D3D3'), imhist(P2, 10);
-figure('Name', 'Histogram (256 bins)', 'Color', '#D3D3D3'), imhist(P2, 256);
+figure('Name', 'Histogram Equalization of P', 'Color', '#D3D3D3');
 
-%% b
-P3 = histeq(P, 255);
-imhist(P3, 10);
-imhist(P3, 256);
+subplot(3,3,1), imhist(P, 10), title('Before (10 bins)');
+subplot(3,3,2), imhist(P, 256), title('Before (256 bins)');
+subplot(3,3,3), imshow(P), title('Before');
 
-%% c
-P3 = histeq(P3, 255);
-imhist(P3, 10);
-imhist(P3, 256);
+%
 
+%% (b) Histogram Equalization on P
+P3 = histeq(P, 256);
+subplot(3,3,4), imhist(P3, 10), title('1st Hist. Equalization (10 bins)');
+subplot(3,3,5), imhist(P3, 256), title('1st Hist. Equalization (256 bins)');
+subplot(3,3,6), imshow(P3), title('After 1st Hist. Equalization');
+% 
+
+%% (c) Repeat Histogram Equalization on P
+P3b = histeq(P3, 256);
+subplot(3,3,7), imhist(P3b, 10), title('2nd Hist. Equalization (10 bins)');
+subplot(3,3,8), imhist(P3b, 256), title('2nd Hist. Equalization (256 bins)');
+subplot(3,3,9), imshow(P3b), title('After 2nd Hist. Equalization');
+
+diff = imsubtract(P3(:,:), P3b(:,:));
+figure('Name', 'P3 subtract P3b', 'Color', '#D3D3D3'), imshow(diff), title('Pixels are all 0, indicating P3 == P3b');
+
+assert(max(diff(:)) == 0) % Check if P2 has gone through contrast stretching
+disp("Assertion passed : P3 == P3b");
+
+% Same Histogram even after repeated Histogram Equalization.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2.3 Linear Spatial Filtering
