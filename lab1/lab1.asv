@@ -96,7 +96,7 @@ sigma_a1 = 1.0; % Standard Deviation of distribution.
 h1 = h(X, Y, sigma_a1);
 h1_norm = normalize_h(h1);
 assert(max(max(h1_norm - fspecial('gaussian', 5, 1)))<1^-10)
-disp("Assertion passed : h1_norm is correct.");
+disp("Assertion passed : P1d max and min values are 0 and 255 respectively.");
 
 subplot(1,2,1), mesh(h1_norm), title('Filter h1, sigma=1.0');
 
@@ -108,9 +108,6 @@ sigma_a2 = 2.0; % Standard Deviation of distribution.
 [X,Y] = meshgrid(x,y);
 h2 = h(X, Y, sigma_a2);
 h2_norm = normalize_h(h2);
-assert(max(max(h2_norm - fspecial('gaussian', 5, 2)))<1^-10)
-disp("Assertion passed : h2_norm is correct.");
-
 subplot(1,2,2), mesh(h2_norm), title('Filter h2, sigma=2.0');
 
 %% (b) Image with Additive Gaussian Noise
@@ -119,9 +116,9 @@ P3b = imread('images/lib-gn.jpg');
 subplot(2,2,1), imshow(P3b), title('Original');
 
 %% (c) Effect of Gaussian filter on (b) image
-P3c1 = uint8(conv2(P3b, h1, 'same'));
+P3c1 = uint8(conv2(P3b, h1));
 subplot(2,2,3), imshow(P3c1), title('h1 (5x5 Normalized Gaussian, sigma=1.0)');
-P3c2 = uint8(conv2(P3b, h2, 'same'));
+P3c2 = uint8(conv2(P3b, h2));
 subplot(2,2,4), imshow(P3c2), title('h2 (5x5 Normalized Gaussian, sigma=2.0)');
 
 %% (d) Image with Additive Speckle Noise
@@ -130,43 +127,13 @@ P3d = imread('images/lib-sp.jpg');
 subplot(2,2,1), imshow(P3d), title('Original');
 
 %% (e) Effect of Gaussian filter on (d) image
-P3e1 = uint8(conv2(P3d, h1, 'same'));
+P3e1 = uint8(conv2(P3d, h1));
 subplot(2,2,3), imshow(P3e1), title('h1 (5x5 Normalized Gaussian, sigma=1.0)');
-P3e2 = uint8(conv2(P3d, h2, 'same'));
+P3e2 = uint8(conv2(P3d, h2));
 subplot(2,2,4), imshow(P3e2), title('h2 (5x5 Normalized Gaussian, sigma=2.0)');
 
 %% Conclusion
 % Gaussian filter is more effective in removing gaussian noise than speckle noise.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% 2.4 Median Filtering
-
-%% (b) Image with Additive Gaussian Noise
-figure('Name', 'lib-gn.jpg - Image with Additive Gaussian Noise', 'Color', '#D3D3D3');
-P4b = imread('images/lib-gn.jpg');
-subplot(2,2,1), imshow(P4b), title('Original');
-
-%% (c) Effect of Median filter on (b) image
-% 3x3 median filter kernel
-P4c1 = medfilt2(P4b,[3,3]);
-subplot(2,2,3), imshow(P4c1), title('Median filter, 3x3');
-% 5x5 median filter kernel
-P4c2 = medfilt2(P4b,[5,5]);
-subplot(2,2,4), imshow(P4c2), title('Median filter, 5x5');
-
-%% (d) Image with Additive Speckle Noise
-figure('Name', 'lib-sp.jpg - Image with Additive Speckle Noise', 'Color', '#D3D3D3');
-P4d = imread('images/lib-sp.jpg');
-subplot(2,2,1), imshow(P4d), title('Original');
-
-%% (e) Effect of Median filter on (d) image
-% 3x3 median filter kernel
-P4e1 = medfilt2(P4d,[3,3]);
-subplot(2,2,3), imshow(P4e1), title('Median filter, 3x3');
-% 5x5 median filter kernel
-P4e2 = medfilt2(P4d,[5,5]);
-subplot(2,2,4), imshow(P4e2), title('Median filter, 5x5');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
