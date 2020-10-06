@@ -15,12 +15,11 @@ x2 = 309; y2 = 48;
 x3 = 7; y3 = 160;
 x4 = 255; y4 = 213;
 
+X = [143; 309; 7; 255] % 
+Y = [28; 48; 160; 213];
 
-X = [143; 309; 7; 255] % x-coord (Top-left; Top-right; Btm-Left, Btm-right)
-Y = [28; 48; 160; 213]; % y-coord (Top-left; Top-right; Btm-Left, Btm-right)
-
-Xim = [0; 210; 210; 0]; % x-coord (Top-left; Top-right; Btm-Left, Btm-right)
-Yim = [0; 0; 297; 297]; % y-coord (Top-left; Top-right; Btm-Left, Btm-right)
+Xim = [0; 210; 210; 0];
+Yim = [0; 0; 297; 297];
 
 %% c
 A = [

@@ -170,3 +170,122 @@ subplot(2,2,4), imshow(P4e2), title('Median filter, 5x5');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% 2.5 Suppressing Noise Interference Patterns
+
+%% (a) Display pck-int.jpg, an image with dominant diagonal lines
+P = imread('images/pck-int.jpg');
+figure('Name', '5a'), imshow(P);
+
+%% (b) Obtain Fourier Transform F of image and FFT shift
+F = fft2(P); % complex matrix
+S = abs(F); % real matrix
+figure('Name', '5b'), imagesc(fftshift(log10(S)));
+colormap('default');
+
+%% (c) Measure location of peaks on S, w/o FFT shift
+figure('Name', '5c'), imagesc(log10(S)); % w/o fftshift
+colormap('default');
+% Peaks are at (241,9) & (17,249)
+
+%% (d) Remove peaks from F
+x1 = 241; 
+y1 = 9; 
+x2 = 17; 
+y2 = 249;
+
+F(x1-2:x1+2, y1-2:y1+2) = 0;
+F(x2-2:x2+2, y2-2:y2+2) = 0;
+S = abs(F);
+figure('Name', '5d'), imagesc(fftshift(log10(S)));
+colormap('default');
+
+%% (e)(i) Inverse Fourier Transform
+result = uint8(ifft2(F));
+figure('Name', '5e'), imshow(result);
+
+%% (e)(ii) Improve upon results from (e)(i)
+norm = @(array) ...
+    array ./ sum(array(:))
+
+P = imread('images/pck-int.jpg');
+whos P
+F = fftshift(fft2(P)); % complex matrix
+S = abs(F); % real matrix
+
+norm_S = norm(S);
+
+minValue = min(min(S))
+maxValue = max(max(S))
+
+amplitudeThreshold = 50000;
+peaks = S > amplitudeThreshold; % Binary image.
+figure('Name', 'Peaks from Thresholding'), imshow(peaks);
+% Exclude the central DC spike. (row 115 to 143)
+peaks(118:140, :) = 0;
+peaks(:, 125:132) = 0;
+figure('Name', 'Exclude central peaks'), imshow(peaks);
+
+F(peaks) = 0;
+S = abs(F);
+figure('Name', 'Removed Peaks'), imagesc(fftshift(log10(S)));
+
+result = uint8(ifft2(F));
+figure('Name', 'Final Result before filter'), imshow(result);
+
+PSF = fspecial('gaussian', 3, 1)
+result = uint8(conv2(result, PSF, 'same'));
+figure('Name', 'Final Result after filter'), imshow(result, []);
+
+%% (f) "Free" the Primate!
+norm = @(array) ...
+    array ./ sum(array(:))
+
+P = imread('images/primate-caged.jpg');
+P = rgb2gray(P);    
+whos P
+
+edges = edge(P, 'Canny' )
+selected_edges = bwareaopen(edges,110,8); % Remove objects (8-connected) with less than 110 pixels.
+P_copy = P;
+P_copy(selected_edges) = 0;
+average_pixel_value = sum(P(selected_edges>0)) / (256*256) % Average pixel value of non-edges.
+
+remove_fence = P;
+remove_fence(P>=135 & P<=195) = average_pixel_value; % Replace fence with average pixel value of non-edges calculated earlier.
+figure('Name', 'Original image VS Fence "removed"'), imshowpair(P, remove_fence, 'montage');
+
+F = fftshift(fft2(P)); % complex matrix
+S = abs(F); % real matrix
+figure('Name', 'Before Peaks'), imagesc(fftshift(log10(S)));
+
+norm_S = norm(S);
+
+log10_S = log10(S);
+minValue = min(min(log10_S))
+maxValue = max(max(log10_S))
+
+amplitudeThreshold = 4.375;
+peaks_thres = log10_S > amplitudeThreshold; % Binary image.
+% Exclude central peaks. (row 120 to 138)
+peaks_thres_central_excluded = peaks_thres;
+peaks_thres_central_excluded(:, 120:138) = 0;
+figure('Name', 'Peaks from Thresholding'), imshowpair(peaks_thres, peaks_thres_central_excluded, 'montage');
+
+F(peaks_thres_central_excluded) = 0;
+S = abs(F);
+figure('Name', 'Removed Peaks');
+subplot(1,2,1), imagesc(log10(S)), title('fft');
+subplot(1,2,2), imagesc(fftshift(log10(S))), title('fft shift');
+
+result = uint8(ifft2(F)); % Inverse fft to obtain image
+result(result==0) = average_pixel_value; % Replace dark spots with average pixel value of non-edges calculated earlier.
+
+figure('Name', 'Final result');
+subplot(1,2,1), imshow(result, []), title('Before filter');
+PSF = fspecial('gaussian', 3, 0.5);
+result = uint8(conv2(result, PSF, 'same'));
+subplot(1,2,2), imshow(result, []), title('After filter (Final Result)');
+
+figure('Name', 'Final Result'), imshowpair(P, result, 'montage');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
