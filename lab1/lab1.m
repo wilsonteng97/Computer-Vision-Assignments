@@ -5,6 +5,9 @@
 Pc = imread('images/mrt-train.jpg');
 whos Pc;
 P1a = rgb2gray(Pc);
+assert(max(max(Pc(:,:,1) - P1a(:,:))) == 0);
+assert(max(max(Pc(:,:,2) - P1a(:,:))) == 0);
+assert(max(max(Pc(:,:,3) - P1a(:,:))) == 0);
 
 %% (b) Display grayscale image
 whos P1a;
@@ -16,28 +19,35 @@ subplot(1,2,2), imshow(P1a), title('Grayscale');
 min_intensity = min(P1a(:)) % Used as offset
 max_intensity = max(P1a(:))
 
-%% d
+%% (d) Contrast Stretching
 
-% norm_factor = 255 / (double(max_intensity) - double(min_intensity));
-% normalised_img = (double(P) - double(min_intensity)) * norm_factor;
-% P2 = uint8(normalised_img);
+% Native implementation
+norm_factor = 255 / (double(max_intensity) - double(min_intensity));
+normalised_img = (double(P1a) - double(min_intensity)) * norm_factor;
+P1d_ = uint8(normalised_img);
 
 % Using Image Processing Toolbox Library
 P1d(:,:) = imsubtract(P1a(:,:), double(min_intensity));
-P1d(:,:) = immultiply(P1d(:,:), 255 / (double(max_intensity) - double(min_intensity)));
+P1d(:,:) = immultiply(P1d(:,:), ...
+    255 / (double(max_intensity) - double(min_intensity)));
 
-assert(min(P1d(:)) == 0 && max(P1d(:)) == 255) % Check if P2 has gone through contrast stretching
+% Check if P1d and P1d_ has gone through contrast stretching
+assert(min(P1d(:)) == 0 && max(P1d(:)) == 255) 
+assert(min(P1d_(:)) == 0 && max(P1d_(:)) == 255)
+% Check if first principles implmentation is correct
+assert(max(max(P1d(:,:) - P1d_(:,:))) == 0); 
 disp("Assertion passed : P1d max and min values are 0 and 255 respectively.");
 
-%% e
+%% (e) Automatic contrast stretching for display
 
 figure('Name', 'Comparison between original and contrast stretched image', 'Color', '#D3D3D3');
 subplot(1,2,1), imshow(P1a), title('Original');
 subplot(1,2,2), imshow(P1d), title('Contrast Stretched (Normalised)');
 
 % imshow(img, []) displays a contrast stretched image without changing the input matrix. 
-figure('Name', 'Original (imshow(Pla, []))', 'Color', '#D3D3D3'), imshow(P1a, []), title('With imshow(Pla, [])');
-
+figure('Name', 'Comparison between imshow(img) and imshow(img, [])', 'Color', '#D3D3D3');
+subplot(1,2,1), imshow(P1a, []), title('Image w/o normalization -> imshow(P1a, [])');
+subplot(1,2,2), imshow(P1d), title('Image with normalization -> imshow(P1d)');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2.2 Histogram Equalization
 
@@ -49,8 +59,6 @@ figure('Name', 'Histogram Equalization of P2', 'Color', '#D3D3D3');
 subplot(3,3,1), imhist(P2, 10), title('Before (10 bins)');
 subplot(3,3,2), imhist(P2, 256), title('Before (256 bins)');
 subplot(3,3,3), imshow(P2), title('Before');
-
-%
 
 %% (b) Histogram Equalization on P
 P2b = histeq(P2, 256);
@@ -67,11 +75,13 @@ subplot(3,3,9), imshow(P2c), title('After 2nd Hist. Equalization');
 
 diff = imsubtract(P2b(:,:), P2c(:,:));
 figure('Name', 'P2b subtract P2c', 'Color', '#D3D3D3'), imshow(diff), title('Pixels are all 0, indicating P2b == P2c');
-figure('Name', 'Ignore', 'Color', '#D3D3D3'), imshow(diff), title('Ignore');
+% figure('Name', 'Ignore', 'Color', '#D3D3D3'), imshow(diff), title('Ignore');
 
 assert(max(diff(:)) == 0) % Check if P2 has gone through contrast stretching
 disp("Assertion passed : P2b == P2c");
 
+figure, imhist(P2, 10), title('Before (10 bins)');
+figure, imhist(P2b, 10), title('1st Hist. Equalization (10 bins)');
 % Same Histogram even after repeated Histogram Equalization.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -95,7 +105,7 @@ sigma_a1 = 1.0; % Standard Deviation of distribution.
 [X,Y] = meshgrid(x,y);
 h1 = h(X, Y, sigma_a1);
 h1_norm = normalize_h(h1);
-assert(max(max(h1_norm - fspecial('gaussian', 5, 1)))<1^-10)
+assert(max(max(h1_norm - fspecial('gaussian', 5, 1)))<10^-10)
 disp("Assertion passed : h1_norm is correct.");
 
 subplot(1,2,1), mesh(h1_norm), title('Filter h1, sigma=1.0');
@@ -199,7 +209,7 @@ S = abs(F);
 figure('Name', '5d'), imagesc(fftshift(log10(S)));
 colormap('default');
 
-%% (e)(i) Inverse Fourier Transform
+%% (e)(i) Inverse Fourier Transform on F
 result = uint8(ifft2(F));
 figure('Name', '5e'), imshow(result);
 
