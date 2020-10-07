@@ -1,6 +1,3 @@
-
-
-
 %% 2.6 Undoing Perspective Distortion of Planar Surface
 
 %% (a)
@@ -8,7 +5,7 @@ P = imread('images/book.jpg');
 %figure, imshow(P), axis on; 
 who P
 
-%% b
+%% (b)
 % [X, Y] = ginput(4);
 x1 = 142; y1 = 28; % Top-left
 x2 = 308; y2 = 48; % Top-right
@@ -22,7 +19,7 @@ Yw = [y1; y2; y3; y4]; % y-coord (Top-left; Top-right; Btm-Left, Btm-right)
 Xim = [0; 210; 0; 210]; % x-coord (Top-left; Top-right; Btm-Left, Btm-right)
 Yim = [0; 0; 297; 297]; % y-coord (Top-left; Top-right; Btm-Left, Btm-right)
 
-%% c
+%% (c)
 A = zeros(8,8);
 for i = 1:4
     A(i*2-1, :) = [Xw(i); Yw(i); 1; 0; 0; 0; (-1 * Xim(i) * Xw(i)); (-1 *  Xim(i) * Yw(i))];
@@ -35,11 +32,11 @@ U = reshape([u;1], 3, 3)';
 w = U*[Xw'; Yw'; ones(1,4)];
 w = w ./ (ones(3,1) * w(3,:))
 
-%% d
+%% (d)
 T = maketform('projective', U');
 P2 = imtransform(P, T, 'XData', [0 210], 'YData', [0 297]);
 
-%% e
+%% (e)
 figure('Name', 'Result');
 subplot(1,2,1), imshow(P), title('Original');
 subplot(1,2,2), imshow(P2), title('After Warping');

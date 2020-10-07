@@ -1,4 +1,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% CZ4003 Computer Vision | Lab Report 1
+% Wilson Thurman Teng | U1820540H
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 2.1 Contrast Stretching
 
 %% (a) Load image and transform to grayscale
@@ -254,11 +259,11 @@ P = imread('images/primate-caged.jpg');
 P = rgb2gray(P);    
 whos P
 
-edges = edge(P, 'Canny' )
+edges = edge(P, 'Canny' );
 selected_edges = bwareaopen(edges,110,8); % Remove objects (8-connected) with less than 110 pixels.
 P_copy = P;
 P_copy(selected_edges) = 0;
-average_pixel_value = sum(P(selected_edges>0)) / (256*256) % Average pixel value of non-edges.
+average_pixel_value = sum(P(selected_edges==0)) / (256*256) % Average pixel value of non-edges.
 
 remove_fence = P;
 remove_fence(P>=135 & P<=195) = average_pixel_value; % Replace fence with average pixel value of non-edges calculated earlier.
@@ -266,7 +271,7 @@ figure('Name', 'Original image VS Fence "removed"'), imshowpair(P, remove_fence,
 
 F = fftshift(fft2(P)); % complex matrix
 S = abs(F); % real matrix
-figure('Name', 'Before Peaks'), imagesc(fftshift(log10(S)));
+S_before = S;
 
 norm_S = norm(S);
 
@@ -274,18 +279,18 @@ log10_S = log10(S);
 minValue = min(min(log10_S))
 maxValue = max(max(log10_S))
 
-amplitudeThreshold = 4.375;
+amplitudeThreshold = 4.60;
 peaks_thres = log10_S > amplitudeThreshold; % Binary image.
 % Exclude central peaks. (row 120 to 138)
 peaks_thres_central_excluded = peaks_thres;
-peaks_thres_central_excluded(:, 120:138) = 0;
+peaks_thres_central_excluded(:, 122:136) = 0;
 figure('Name', 'Peaks from Thresholding'), imshowpair(peaks_thres, peaks_thres_central_excluded, 'montage');
 
 F(peaks_thres_central_excluded) = 0;
 S = abs(F);
 figure('Name', 'Removed Peaks');
-subplot(1,2,1), imagesc(log10(S)), title('fft');
-subplot(1,2,2), imagesc(fftshift(log10(S))), title('fft shift');
+subplot(1,2,1), imagesc(log10(S_before)), title('before');
+subplot(1,2,2), imagesc(log10(S)), title('removed peaks');
 
 result = uint8(ifft2(F)); % Inverse fft to obtain image
 result(result==0) = average_pixel_value; % Replace dark spots with average pixel value of non-edges calculated earlier.
@@ -299,3 +304,49 @@ subplot(1,2,2), imshow(result, []), title('After filter (Final Result)');
 figure('Name', 'Final Result'), imshowpair(P, result, 'montage');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% 2.6 Undoing Perspective Distortion of Planar Surface
+
+%% (a) Display book.jpg
+P = imread('images/book.jpg');
+figure, imshow(P), axis on; 
+whos P
+
+%% (b)Obtain the corner of the book in the image, as well as the desired 4 corners
+% [X, Y] = ginput(4);
+x1 = 142; y1 = 28; % Top-left
+x2 = 308; y2 = 48; % Top-right
+x3 = 3; y3 = 159; % Btm-Left
+x4 = 257; y4 = 216; % Btm-right
+
+
+Xw = [x1; x2; x3; x4]; % x-coord (Top-left; Top-right; Btm-Left, Btm-right)
+Yw = [y1; y2; y3; y4]; % y-coord (Top-left; Top-right; Btm-Left, Btm-right)
+
+Xim = [0; 210; 0; 210]; % x-coord (Top-left; Top-right; Btm-Left, Btm-right)
+Yim = [0; 0; 297; 297]; % y-coord (Top-left; Top-right; Btm-Left, Btm-right)
+
+%% (c) Setup matrix to estimate the projective transformation 
+% Generate matrix A
+A = zeros(8,8);
+for i = 1:4
+    A(i*2-1, :) = [Xw(i); Yw(i); 1; 0; 0; 0; (-1 * Xim(i) * Xw(i)); (-1 *  Xim(i) * Yw(i))];
+    A(i*2, :) = [0; 0; 0; Xw(i); Yw(i); 1; (-1 * Yim(i) * Xw(i)); (-1 *  Yim(i) * Yw(i))];
+end
+
+v = [Xim(1); Yim(1); Xim(2); Yim(2); Xim(3); Yim(3); Xim(4); Yim(4)];
+u = A \ v;
+U = reshape([u;1], 3, 3)'; 
+
+% Verify U is correct by transforming into original coordinates.
+w = U*[Xw'; Yw'; ones(1,4)];
+w = w ./ (ones(3,1) * w(3,:))
+
+%% (d) Warp image
+T = maketform('projective', U');
+P2 = imtransform(P, T, 'XData', [0 210], 'YData', [0 297]);
+
+%% (e) Display image
+figure('Name', 'Result');
+subplot(1,2,1), imshow(P), title('Original');
+subplot(1,2,2), imshow(P2), title('After Warping');
