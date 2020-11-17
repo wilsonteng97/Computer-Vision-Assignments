@@ -10,8 +10,8 @@
 Pc = imread('images/macritchie.jpg');
 whos Pc;
 P1a = rgb2gray(Pc);
-figure('Name', 'Grayscale img', 'Color', '#D3D3D3');
-imshow(P1a, [])
+figure('Name', 'Grayscale img', 'Color', '#D3D3D3'); 
+imshow(P1a, []); axis on;
 min_intensity = min(P1a(:))
 max_intensity = max(P1a(:))
 
@@ -26,6 +26,7 @@ sobel_v_mask = [
     -2 0 2; 
     -1 0 1
 ];
+
 % Horizontal edges using Vertical Sobel filter
 horizontal = conv2(im2double(P1a), sobel_h_mask, 'same');
 horizontal = abs(horizontal);
@@ -99,7 +100,7 @@ subplot_tight(3,3,8), imshow(Et5, []), title('Threshold = 130');
 subplot_tight(3,3,9), imshow(Et6, []), title('Threshold = 160');
 
 Et = combined_edges > 50;
-%subplot(3,3,3), imshow(Et, []), title('Best threshold = 50');
+figure(), imshow(Et, []), title('Best threshold = 50');
 
 % Low Thresholds :
 % + 1) Detailed edge information about the image is retained. This is useful
@@ -115,12 +116,12 @@ Et = combined_edges > 50;
 % to see any detected edges with semantic significance when the threshold
 % value is set to 160.
 
-%% (e)(i) Canny edge detection algorithm (Varying Sigma)
+%% (e) Canny edge detection algorithm
 tl = 0.04; th = 0.1; sigma = 1.0;
 cannyedges = edge(P1a, 'canny', [tl th], sigma);
 figure('Name', 'Canny edges', 'Color', '#D3D3D3');
 sgtitle('Thres = [0.04 0.1], sigma = 1.0');
-imshow(cannyedges_sigma1, [])
+imshow(cannyedges, [])
 
 %% (e)(i) Canny edge detection algorithm (Varying Sigma)
 tl = 0.04; th = 0.35;
@@ -144,8 +145,8 @@ subplot_tight(1,4,4), imshow(cannyedges_sigma25, []), title('Sigma = 2.5');
 figure('Name', 'Canny edges, changing sigma (3.5 - 5)', 'Color', '#D3D3D3');
 subplot_tight(1,5,1), imshow(cannyedges_sigma3, []), title('Sigma = 3.0');
 subplot_tight(1,5,2), imshow(cannyedges_sigma35, []), title('Sigma = 3.5');
-subplot_tight(1,5,3), imshow(cannyedges_sigma45, []), title('Sigma = 4.5');
-subplot_tight(1,5,4), imshow(cannyedges_sigma4, []), title('Sigma = 4.0');
+subplot_tight(1,5,3), imshow(cannyedges_sigma4, []), title('Sigma = 4.0');
+subplot_tight(1,5,4), imshow(cannyedges_sigma45, []), title('Sigma = 4.5');
 subplot_tight(1,5,5), imshow(cannyedges_sigma5, []), title('Sigma = 5.0');
 
 %% (e)(ii) Canny edge detection algorithm (Varying Threshold Low)
@@ -180,134 +181,167 @@ subplot_tight(1,5,5), imshow(cannyedges_sigma9, []), title('Thres Low = 0.09');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 3.2 Line Finding using Hough Transform
 
-%% (a) Show histogram of P
-Pc = imread('images/mrt-train.jpg');
-horizontal = rgb2gray(Pc);
-figure('Name', 'Histogram Equalization of P2', 'Color', '#D3D3D3');
+%% (a) Reuse canny edges image with tl = 0.04, th = 0.1 and sigma = 1.0
+Pc = imread('images/macritchie.jpg');
+P2a = rgb2gray(Pc);
+whos P2a
+% P2a = imread('images/test.png');
+tl = 0.04; th = 0.1; sigma = 1.0;
+cannyedges = edge(P2a, 'canny', [tl th], sigma);
+figure('Name', 'Canny edges', 'Color', '#D3D3D3');
+sgtitle('Thres = [0.04 0.1], sigma = 1.0');
+imshow(cannyedges, [])
 
-subplot(3,3,1), imhist(horizontal, 10), title('Before (10 bins)');
-subplot(3,3,2), imhist(horizontal, 256), title('Before (256 bins)');
-subplot(3,3,3), imshow(horizontal), title('Before');
+%% (b) Radon Transform (Equivalent to Hough Transform for binary images)
+help radon
+default_theta = 0:179;
+[H, xp] = radon(cannyedges, default_theta); 
+H_size = size(H), xp_size = size(xp)
+figure('Name', 'Radon Transform on Binary Image', 'Color', '#D3D3D3');
+%subplot_tight(1,2,1), 
+imagesc(H,'Xdata',default_theta,'Ydata',xp);
+title('R_{\theta} (x^{\prime})');
+xlabel('\theta (degrees)'); ylabel('x^{\prime} (pixels from center)');
+colormap('default'), colorbar
 
-%% (b) Histogram Equalization on P
-P2b = histeq(horizontal, 256);
-subplot(3,3,4), imhist(P2b, 10), title('1st Hist. Equalization (10 bins)');
-subplot(3,3,5), imhist(P2b, 256), title('1st Hist. Equalization (256 bins)');
-subplot(3,3,6), imshow(P2b), title('After 1st Hist. Equalization');
+
+% cannyedges = edge(P2a, 'canny', [tl th], sigma);
+% [H2,theta,rho] = hough(cannyedges,'RhoResolution',1,'Theta',-90:0.5:89); 
+% size(H2), size(theta), size(rho)
+% figure('Name', 'Comparison between Radon & Hough transform', 'Color', '#D3D3D3');
+% subplot_tight(1,2,1), imagesc(H,'Xdata',default_theta,'Ydata',xp);
+% title('R_{\theta} (x^{\prime})');
+% xlabel('\theta (degrees)'); ylabel('x^{\prime} (pixels from center)');
+% colormap('default'), colorbar
+% subplot_tight(1,2,2), imagesc(H2,'Xdata',theta,'Ydata',rho);
+% title('R_{\theta} (\rho)');
+% xlabel('\theta'), ylabel('\rho (pixels from coordinate origin 0,0)');
+% colormap('default'), colorbar
+
 % 
 
-%% (c) Repeat Histogram Equalization on P
-P2c = histeq(P2b, 256);
-subplot(3,3,7), imhist(P2c, 10), title('2nd Hist. Equalization (10 bins)');
-subplot(3,3,8), imhist(P2c, 256), title('2nd Hist. Equalization (256 bins)');
-subplot(3,3,9), imshow(P2c), title('After 2nd Hist. Equalization');
+%% (c) Location of maximum pixel intensity in Hough Image in [theta, radius] form
+maxH = max(H(:))
+maxH_img = H>=int32(maxH);
+figure('Name', 'maximum pixel intensity in Hough Projection', 'Color', '#D3D3D3');
+imagesc(maxH_img,'Xdata',default_theta,'Ydata',xp)
+title('R_{\theta} (x^{\prime})');
+xlabel('\theta (degrees)'); ylabel('x^{\prime} (pixels from center)');
+colormap('default'), colorbar
 
-diff = imsubtract(P2b(:,:), P2c(:,:));
-figure('Name', 'P2b subtract P2c', 'Color', '#D3D3D3'), imshow(diff), title('Pixels are all 0, indicating P2b == P2c');
-% figure('Name', 'Ignore', 'Color', '#D3D3D3'), imshow(diff), title('Ignore');
+[radiusOfMaxWithoutOffset, thetaOfMaxWithoutOffset] = find(H == maxH) % After accounting for offset, theta:103, radius:-76
+radiusOfMax = xp(radiusOfMaxWithoutOffset)
+thetaOfMax = thetaOfMaxWithoutOffset - 1
 
-assert(max(diff(:)) == 0) % Check if P2 has gone through contrast stretching
-disp("Assertion passed : P2b == P2c");
+%% (d) Convert the [theta, radius] line representation to the normal line equation Ax + By = C form in image coordinates
+% After accounting for offset, thetaOfMax = 103 & radiusOfMax = -76
+[img_height, img_width] = size(P1a);
+[A, B] = pol2cart(thetaOfMax*pi/180, radiusOfMax);
+A, B = -B % B needs to be negated because the y-axis is pointing downwards for image coordinates.
 
-figure, imhist(horizontal, 10), title('Before (10 bins)');
-figure, imhist(P2b, 10), title('1st Hist. Equalization (10 bins)');
-% Same Histogram even after repeated Histogram Equalization.
+C = A * (A + img_width/2) + B * (B + img_height/2)
+
+%% (e) Find value of y when x = 0 and x = width of image - 1
+xl = 0; xr = img_width - 1;
+yl = (C - A * xl) / B
+yr = (C - A * xr) / B
+
+%% (f) Superimpose estimated line on original image
+figure('Name', 'Strongest Edge line', 'Color', '#D3D3D3'); 
+subplot_tight(1,2,1), imshow(P1a);
+title('Strongest Edge line (theta=103, radius=-76)');
+line([xl xr], [yl yr],'Color','red','LineStyle','--')
+
+new_theta_range = 0:0.01:179;
+[new_H, xp] = radon(cannyedges, new_theta_range);
+[newRadiusOfMaxWithoutOffset, newThetaOfMaxWithoutOffset] = find(new_H == max(new_H(:))) % After accounting for offset, theta:103, radius:-76
+newRadiusOfMax = xp(newRadiusOfMaxWithoutOffset)
+newThetaOfMax = new_theta_range(newThetaOfMaxWithoutOffset) % new_theta = 102.72
+[A, B] = pol2cart(newThetaOfMax*pi/180, newRadiusOfMax);
+A, B = -B
+C = A * (A + img_width/2) + B * (B + img_height/2)
+
+yl2 = (C - A * xl) / B
+yr2 = (C - A * xr) / B
+subplot_tight(1,2,2), imshow(P1a);
+title('Strongest Edge line (theta=102.72, radius=-76)');
+line([xl xr], [yl2 yr2],'Color','red','LineStyle','--')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 3.3 3D Stereo
 
-%% (a)(i) 5x5 Gaussian PSF with Sigma = 1.0
-% Functions to generate Gaussian PSF
-sqrt_dist = @(x,y) ...
-    x.^2 + y.^2;
-h = @(x, y, sigma) ...
-    (1 / (2 * pi * sigma^2)) * (exp(-1*sqrt_dist(x,y) / (2 * sigma^2)));
-normalize_h = @(h) ...
-    h ./ sum(h(:));
+% (i) Extract a template comprising the 11x11 neighbourhood region around that pixel.
+% (ii) carry out SSD matching in Pr, but only along the same scanline.
+% (iii) Input the disparity into the disparity map with the same Pl pixel coordinates. 
 
-figure('Name', 'Linear Spatial Filtering (Gaussian, 5x5 kernel)', 'Color', '#D3D3D3');
+%% (a) Disparity map algorithm as a MATLAB function script
+% 2 arguments of left and right images
+% 2 arguments specifying the template dimensions
+% It should return the disparity map.
 
-x = -2:2;
-y = -2:2;
-sigma_a1 = 1.0; % Standard Deviation of distribution.
+% function declared in disparityMap.m
 
-[X,Y] = meshgrid(x,y);
-sobel_h_mask = h(X, Y, sigma_a1);
-h1_norm = normalize_h(sobel_h_mask);
-assert(max(max(h1_norm - fspecial('gaussian', 5, 1)))<10^-10)
-disp("Assertion passed : h1_norm is correct.");
+%% (b) Download the synthetic stereo pair images of ‘corridorl.jpg’ and ‘corridorr.jpg’, converting both to grayscale.
+l = imread('images/corridorl.jpg'); 
+l1 = rgb2gray(l);
+r = imread('images/corridorr.jpg');
+r1 = rgb2gray(r);
 
-subplot(1,2,1), mesh(h1_norm), title('Filter h1, sigma=1.0');
+% Take red channels from left image
+leftRed = l(:,:,1);
+% Take the green and blue color channels from the right image.
+rightGreenBlue = r(:,:,2:3);
+% Combine channels into a single composite image
+composite = cat(3, leftRed, rightGreenBlue);
 
-%% (a)(ii) 5x5 Gaussian PSF with Sigma = 2.0
-x = -2:2;
-y = -2:2;
-sigma_a2 = 2.0; % Standard Deviation of distribution.
+figure('Name', '‘corridorl.jpg’ and ‘corridorr.jpg’', 'Color', '#D3D3D3');
+subplot_tight(1,2,1), imshow(l1, []), title('Left Image');
+subplot_tight(1,2,2), imshow(r1, []), title('Right Image');
 
-[X,Y] = meshgrid(x,y);
-sobel_v_mask = h(X, Y, sigma_a2);
-h2_norm = normalize_h(sobel_v_mask);
-assert(max(max(h2_norm - fspecial('gaussian', 5, 2)))<1^-10)
-disp("Assertion passed : h2_norm is correct.");
+figure('Name', 'corridor composite image', 'Color', '#D3D3D3');
+imshow(composite, []), title('Composite image (Corridor)'); axis on;
 
-subplot(1,2,2), mesh(h2_norm), title('Filter h2, sigma=2.0');
+%% (c) Obtain Disparity Map D
+D1 = disparityMap(l1, r1, 11, 11);
+res1 = imread('images/corridor_disp.jpg');
 
-%% (b) Image with Additive Gaussian Noise
-figure('Name', 'lib-gn.jpg - Image with Additive Gaussian Noise', 'Color', '#D3D3D3');
-P3b = imread('images/lib-gn.jpg');
-subplot(2,2,1), imshow(P3b), title('Original');
+figure('Name', '‘Disparity Map of corridor', 'Color', '#D3D3D3');
+subplot_tight(1,2,1), imshow(D1,[-15 15]), title('Obtained Disparity Map');
+subplot_tight(1,2,2), imshow(res1, []), title('Expected Disparity Map');
 
-%% (c) Effect of Gaussian filter on (b) image
-P3c1 = uint8(conv2(P3b, sobel_h_mask, 'same'));
-subplot(2,2,3), imshow(P3c1), title('h1 (5x5 Normalized Gaussian, sigma=1.0)');
-P3c2 = uint8(conv2(P3b, sobel_v_mask, 'same'));
-subplot(2,2,4), imshow(P3c2), title('h2 (5x5 Normalized Gaussian, sigma=2.0)');
+%% (d) Rerun algorithm on the real images of ‘triclops-i2l.jpg’ and triclops-i2r.jpg’. 
+l = imread('images/triclops-i2l.jpg'); 
+l2 = rgb2gray(l);
+r = imread('images/triclops-i2r.jpg');
+r2 = rgb2gray(r);
 
-%% (d) Image with Additive Speckle Noise
-figure('Name', 'lib-sp.jpg - Image with Additive Speckle Noise', 'Color', '#D3D3D3');
-P3d = imread('images/lib-sp.jpg');
-subplot(2,2,1), imshow(P3d), title('Original');
+D2 = disparityMap(l2, r2, 11, 11);
+res2 = imread('images/triclops-id.jpg');
 
-%% (e) Effect of Gaussian filter on (d) image
-P3e1 = uint8(conv2(P3d, sobel_h_mask, 'same'));
-subplot(2,2,3), imshow(P3e1), title('h1 (5x5 Normalized Gaussian, sigma=1.0)');
-P3e2 = uint8(conv2(P3d, sobel_v_mask, 'same'));
-subplot(2,2,4), imshow(P3e2), title('h2 (5x5 Normalized Gaussian, sigma=2.0)');
+figure('Name', '‘Disparity Map of triclops', 'Color', '#D3D3D3');
+subplot_tight(1,2,1), imshow(l2, []), title('Left Image');
+subplot_tight(1,2,2), imshow(r2, []), title('Right Image');
+figure('Name', '‘Disparity Map of triclops', 'Color', '#D3D3D3');
+subplot_tight(1,2,1), imshow(D2, [-15 15]), title('Obtained Disparity Map');
+subplot_tight(1,2,2), imshow(res2, []), title('Expected Disparity Map');
 
-%% Conclusion
-% Gaussian filter is more effective in removing gaussian noise than speckle noise.
+% Take red channels from left image
+leftRed = l(:,:,1);
+% Take the green and blue color channels from the right image.
+rightGreenBlue = r(:,:,2:3);
+% Combine channels into a single composite image
+composite = cat(3, leftRed, rightGreenBlue);
+figure('Name', 'triclops composite image', 'Color', '#D3D3D3');
+imshow(composite, []), title('Composite image (triclops)'); axis on;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% 3.4 Spatial Pyramid Matching (SPM)
 
-%% (b) Image with Additive Gaussian Noise
-figure('Name', 'lib-gn.jpg - Image with Additive Gaussian Noise', 'Color', '#D3D3D3');
-P4b = imread('images/lib-gn.jpg');
-subplot(2,2,1), imshow(P4b), title('Original');
-
-%% (c) Effect of Median filter on (b) image
-% 3x3 median filter kernel
-P4c1 = medfilt2(P4b,[3,3]);
-subplot(2,2,3), imshow(P4c1), title('Median filter, 3x3');
-% 5x5 median filter kernel
-P4c2 = medfilt2(P4b,[5,5]);
-subplot(2,2,4), imshow(P4c2), title('Median filter, 5x5');
-
-%% (d) Image with Additive Speckle Noise
-figure('Name', 'lib-sp.jpg - Image with Additive Speckle Noise', 'Color', '#D3D3D3');
-P4d = imread('images/lib-sp.jpg');
-subplot(2,2,1), imshow(P4d), title('Original');
-
-%% (e) Effect of Median filter on (d) image
-% 3x3 median filter kernel
-P4e1 = medfilt2(P4d,[3,3]);
-subplot(2,2,3), imshow(P4e1), title('Median filter, 3x3');
-% 5x5 median filter kernel
-P4e2 = medfilt2(P4d,[5,5]);
-subplot(2,2,4), imshow(P4e2), title('Median filter, 5x5');
+% In Python Notebook
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Utility Function(s)
 function vargout=subplot_tight(m, n, p, margins, varargin)
 % subplot_tight from Controllable tight subplot library 
 % (https://www.mathworks.com/matlabcentral/fileexchange/30884-controllable-tight-subplot)
